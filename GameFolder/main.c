@@ -150,7 +150,6 @@ int main(void) {
     int score = 0;
     bool playCollisionSound = false;
 
-    // Physics constants
     const float GRAVITY_ACCELERATION = 1200.0f;
     const float WALL_BOUNCE_FACTOR = 0.7f;
     const float PLANET_BOUNCE_FACTOR = 0.85f;
@@ -166,7 +165,6 @@ int main(void) {
         bool leftFlipperActive = IsKeyDown(KEY_LEFT);
         bool rightFlipperActive = IsKeyDown(KEY_RIGHT);
 
-        // Update flipper angles
         float leftTargetAngle = leftFlipperActive ? leftFlipper.activeAngle : leftFlipper.restingAngle;
         float rightTargetAngle = rightFlipperActive ? rightFlipper.activeAngle : rightFlipper.restingAngle;
         
@@ -188,16 +186,13 @@ int main(void) {
             if (rightFlipper.currentAngle < rightTargetAngle) rightFlipper.currentAngle = rightTargetAngle;
         }
 
-        // Physics simulation with substeps
         for (int substep = 0; substep < PHYSICS_SUBSTEPS; substep++) {
             float substepDeltaTime = frameTime / (float)PHYSICS_SUBSTEPS;
 
-            // Apply gravity and update position
             ball.velocityY += GRAVITY_ACCELERATION * substepDeltaTime;
             ball.x += ball.velocityX * substepDeltaTime;
             ball.y += ball.velocityY * substepDeltaTime;
 
-            // Wall collisions
             if (ball.x - ball.radius < 0) { 
                 ball.x = ball.radius; 
                 ball.velocityX *= -WALL_BOUNCE_FACTOR; 
@@ -211,7 +206,6 @@ int main(void) {
                 ball.velocityY *= -WALL_BOUNCE_FACTOR; 
             }
             
-            // Ball fell below screen - reset
             if (ball.y > SCREEN_HEIGHT + 100) { 
                 ball.x = 300; 
                 ball.y = 450; 
@@ -220,7 +214,6 @@ int main(void) {
                 score = 0; 
             }
 
-            // Boundary walls collision
             float boundaryYCenter = leftFlipper.pivotPoint.y - 35.0f;
             float boundarySlope = 20.0f;
             Vec2f leftBoundaryStart = {0, boundaryYCenter - boundarySlope};
@@ -231,7 +224,6 @@ int main(void) {
             SeparateCircleFromSegment(&ball, leftBoundaryStart, leftBoundaryEnd);
             SeparateCircleFromSegment(&ball, rightBoundaryStart, rightBoundaryEnd);
 
-            // Flipper collisions
             Flipper flippers[2] = {leftFlipper, rightFlipper};
             bool flipperActive[2] = {leftFlipperActive, rightFlipperActive};
             int flipperBaseScore[2] = {10, 15};
@@ -247,7 +239,6 @@ int main(void) {
                 };
                 float capRadius = currentFlipper->width * 0.5f;
                 
-                // Check collision with flipper tip
                 float deltaXToTip = ball.x - flipperEndPos.x;
                 float deltaYToTip = ball.y - flipperEndPos.y;
                 float distanceToTip = sqrtf(deltaXToTip * deltaXToTip + deltaYToTip * deltaYToTip);
@@ -278,7 +269,6 @@ int main(void) {
                     playCollisionSound = true;
                 }
                 
-                // Check collision with flipper body
                 if (!hasCollided && CircleSegmentCollision(flipperStartPos, flipperEndPos, &ball)) {
                     Vec2f closestPoint;
                     float segmentParameter = ClosestPointOnSegment(flipperStartPos, flipperEndPos, 
@@ -312,7 +302,6 @@ int main(void) {
                     playCollisionSound = true;
                 }
                 
-                // Check collision with flipper pivot
                 if (!hasCollided) {
                     float deltaXToPivot = ball.x - flipperStartPos.x;
                     float deltaYToPivot = ball.y - flipperStartPos.y;
@@ -339,7 +328,6 @@ int main(void) {
                 }
             }
 
-            // Planet collisions
             for (int planetIndex = 0; planetIndex < PLANET_COUNT; planetIndex++) {
                 float deltaX = ball.x - planets[planetIndex].x;
                 float deltaY = ball.y - planets[planetIndex].y;
@@ -360,17 +348,14 @@ int main(void) {
             }
         }
 
-        // Play sound once per frame if any collision occurred
         if (playCollisionSound) {
             PlaySound(collisionSound);
         }
 
-        // Rendering
         BeginDrawing();
         ClearBackground(BLACK);
         if (background.id != 0) DrawTexture(background, 0, 0, WHITE);
 
-        // Draw planets
         for (int i = 0; i < PLANET_COUNT; i++) {
             if (planets[i].texture.id != 0) {
                 Rectangle sourceRect = {0, 0, (float)planets[i].texture.width, (float)planets[i].texture.height};
@@ -386,7 +371,6 @@ int main(void) {
             }
         }
 
-        // Draw boundary walls
         float boundaryYDraw = leftFlipper.pivotPoint.y - 35.0f;
         float slopeDraw = 20.0f;
         DrawLineEx((Vector2){0, boundaryYDraw - slopeDraw}, 
@@ -394,20 +378,16 @@ int main(void) {
         DrawLineEx((Vector2){rightFlipper.pivotPoint.x - 5, boundaryYDraw + slopeDraw}, 
                    (Vector2){(float)SCREEN_WIDTH, boundaryYDraw - slopeDraw}, 6, WHITE);
 
-        // Draw flippers
         DrawFlipper(&leftFlipper);
         DrawFlipper(&rightFlipper);
 
-        // Draw ball
         DrawCircleV((Vector2){ball.x, ball.y}, ball.radius, WHITE);
         
-        // Draw score
         DrawText(TextFormat("Score: %d", score), 10, 10, 24, RAYWHITE);
         
         EndDrawing();
     }
 
-    // Cleanup
     if (background.id != 0) UnloadTexture(background);
     for (int i = 0; i < PLANET_COUNT; i++) {
         if (planets[i].texture.id != 0) UnloadTexture(planets[i].texture);
@@ -417,4 +397,5 @@ int main(void) {
     CloseAudioDevice();
     CloseWindow();
     return 0;
+
 }
